@@ -1,0 +1,15 @@
+dataset:
+  root_dir: "data/raw"
+  sources:
+    clean:
+      kaggle_path: "vctk-corpus/vctk-corpus" 
+      extract: true
+    noise:
+      kaggle_path: "ashishjangra27/noise-reduction-dataset" 
+      extract: true
+
+training:
+  batch_size: 32
+  epochs: 50
+  learning_rate: 0.001
+  input_shape: [256, 256, 1]
