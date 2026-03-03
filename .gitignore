@@ -1,3 +1,10 @@
 venv/
 .vscode/
-data/raw/
+data/raw/*
+!data/raw/.gitkeep
+data/processed/test/*
+!data/processed/test/.gitkeep
+data/processed/train/*
+!data/processed/train/.gitkeep
+data/processed/val/*
+!data/processed/val/.gitkeep
