@@ -1,0 +1,94 @@
+# =============================================================================
+# Data Configuration
+# Defines all datasets used in the denoise-audio project.
+# Each dataset is categorised as either "clean" (speech) or "noise".
+# This file is the single source of truth consumed by:
+#   - scripts/download_dataset.py
+#   - src/data/dataset.py
+#   - any preprocessing / training pipeline
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+# Root directories
+# ---------------------------------------------------------------------------
+paths:
+  raw_dir:       "data/raw"
+  processed_dir: "data/processed"
+  train_dir:     "data/processed/train"
+  val_dir:       "data/processed/val"
+  test_dir:      "data/processed/test"
+
+# ---------------------------------------------------------------------------
+# Clean speech datasets
+# ---------------------------------------------------------------------------
+clean:
+  - id: vivos
+    description: "VIVOS Vietnamese Speech Corpus for ASR"
+    kaggle_handle: "kynthesis/vivos-vietnamese-speech-corpus-for-asr"
+    local_path: "data/raw/clean/vivos"
+    language: "vi"
+    sample_rate: 16000        # Hz
+    format: "wav"
+    required: true
+    splits:                   # sub-folders inside the dataset archive
+      train: "train/waves"
+      test:  "test/waves"
+
+# ---------------------------------------------------------------------------
+# Noise datasets
+# ---------------------------------------------------------------------------
+noise:
+  - id: demand
+    description: "DEMAND — Diverse Environments Multichannel Acoustic Noise Database"
+    kaggle_handle: "chrisfilo/demand"
+    local_path: "data/raw/noise/demand"
+    sample_rate: 16000        # Hz (original is 48 kHz; will be resampled)
+    format: "wav"
+    required: true
+    categories:               # environment categories present in DEMAND
+      - DKITCHEN
+      - DLIVING
+      - DWASHING
+      - NPARK
+      - NRIVER
+      - OOFFICE
+      - PCAFETER
+      - PRESTO
+      - PSTATION
+      - SCAFE
+      - SPSQUARE
+      - STRAFFIC
+      - TBUS
+      - TCAR
+      - TMETRO
+
+  - id: musan
+    description: "MUSAN — A Music, Speech, and Noise Corpus"
+    kaggle_handle: "dogrose/musan-dataset"
+    local_path: "data/raw/noise/musan"
+    sample_rate: 16000        # Hz
+    format: "wav"
+    required: true           # optional — skip with --no-musan flag
+    categories:
+      - noise
+      - music
+
+# ---------------------------------------------------------------------------
+# Audio preprocessing defaults (shared across all datasets)
+# ---------------------------------------------------------------------------
+preprocessing:
+  target_sample_rate: 16000  # Hz — all audio resampled to this rate
+  clip_duration_sec: 3.0     # fixed segment length for training
+  overlap_sec: 0.5           # overlap between consecutive segments
+  mono: true                 # downmix to mono
+  normalize: true            # peak-normalize each clip to [-1, 1]
+  snr_range_db: [-5, 20]     # signal-to-noise ratio range for mixing
+
+# ---------------------------------------------------------------------------
+# Train / val / test split ratios (applies to clean speech only)
+# ---------------------------------------------------------------------------
+split:
+  train: 0.80
+  val:   0.10
+  test:  0.10
+  seed:  42
