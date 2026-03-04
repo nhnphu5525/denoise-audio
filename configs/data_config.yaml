@@ -44,7 +44,7 @@ noise:
     local_path: "data/raw/noise/demand"
     sample_rate: 16000        # Hz (original is 48 kHz; will be resampled)
     format: "wav"
-    required: true
+    required: false
     categories:               # environment categories present in DEMAND
       - DKITCHEN
       - DLIVING
