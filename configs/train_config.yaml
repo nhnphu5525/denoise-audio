@@ -1,15 +1,75 @@
-dataset:
-  root_dir: "data/raw"
-  sources:
-    clean:
-      kaggle_path: "vctk-corpus/vctk-corpus" 
-      extract: true
-    noise:
-      kaggle_path: "ashishjangra27/noise-reduction-dataset" 
-      extract: true
+# =============================================================================
+# Training Configuration
+# Consumed by the training pipeline.  Dataset paths/sources are defined in
+# data_config.yaml — this file only controls training hyper-parameters.
+# =============================================================================
 
+# ---------------------------------------------------------------------------
+# STFT / spectrogram parameters
+# These values determine the input_shape below — change all together.
+#   F = n_fft // 2            = 256  (Nyquist bin cropped)
+#   T = ⌈duration*sr/hop⌉    = 375  → padded to next multiple of 16 = 384
+# ---------------------------------------------------------------------------
+stft:
+  n_fft: 512
+  hop_length: 128
+  win_length: 512
+  window: "hann"
+  center: true
+
+# ---------------------------------------------------------------------------
+# Model
+# ---------------------------------------------------------------------------
+model:
+  name: "UNet_IRM_Denoise"
+  # [F, T, C] — F = n_fft//2 = 256, T = 32 frames (256 ms latency), C = 1
+  # T must be a power-of-2; asymmetric pooling (2,1) keeps T unchanged
+  # through all 4 encoder stages → bottleneck shape: (16, 32, base_filters×16)
+  input_shape: [256, 32, 1]
+  base_filters: 64
+  dropout_rate: 0.3
+
+# ---------------------------------------------------------------------------
+# Real-time inference
+# ---------------------------------------------------------------------------
+realtime:
+  # latency = T × hop_length / sample_rate = 32 × 128 / 16000 = 256 ms
+  buffer_frames: 32      # sliding window length (must equal input_shape[1])
+  step_frames: 1         # frames shifted per inference step (= 8 ms)
+  output_frame_idx: -1   # index of the output frame to emit (-1 = last)
+
+# ---------------------------------------------------------------------------
+# Loss  (combined spectral + time-domain)
+#   total = alpha * L1_spectrogram + (1 - alpha) * SI-SNR
+# ---------------------------------------------------------------------------
+loss:
+  alpha: 0.7          # weight for L1 spectrogram loss
+  use_si_snr: true    # add SI-SNR term in time domain
+
+# ---------------------------------------------------------------------------
+# Optimiser & schedule
+# ---------------------------------------------------------------------------
 training:
-  batch_size: 32
-  epochs: 50
-  learning_rate: 0.001
-  input_shape: [256, 256, 1]
+  batch_size: 16
+  epochs: 100
+  learning_rate: 0.0003
+  lr_scheduler: "reduce_on_plateau"   # or "cosine_decay"
+  lr_patience: 5                      # epochs without improvement before LR drop
+  lr_factor: 0.5
+  min_lr: 1.0e-6
+  gradient_clip_norm: 1.0
+
+# ---------------------------------------------------------------------------
+# Callbacks
+# ---------------------------------------------------------------------------
+callbacks:
+  early_stopping:
+    monitor: "val_loss"
+    patience: 15
+    restore_best_weights: true
+  model_checkpoint:
+    dirpath: "models/checkpoints"
+    monitor: "val_loss"
+    save_best_only: true
+  tensorboard:
+    log_dir: "models/logs"
