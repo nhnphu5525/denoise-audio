@@ -29,7 +29,7 @@ clean:
     language: "vi"
     sample_rate: 16000        # Hz
     format: "wav"
-    required: true
+    required: false
     splits:                   # sub-folders inside the dataset archive
       train: "train/waves"
       test:  "test/waves"
